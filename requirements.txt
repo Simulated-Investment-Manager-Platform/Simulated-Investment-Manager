@@ -1,0 +1,6 @@
+# Install into a Python 3.10+ environment
+pandas>=2.0,<3
+numpy>=1.24,<3
+wrds>=3.2
+jupyter>=1.0
+ipykernel>=6.0
