@@ -1,9 +1,20 @@
+# macOS
 .DS_Store
-.ipynb_checkpoints/
+
+# Python
 __pycache__/
 *.pyc
+.ipynb_checkpoints/
+
+# Credentials
 .env
 .env.*
+
+# Generated datasets
 data/
 outputs/
 *.parquet
+
+# Local credentials
+credentials.json
+secrets.json
