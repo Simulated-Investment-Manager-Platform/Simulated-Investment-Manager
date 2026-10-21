@@ -1,0 +1,2 @@
+Restricted historical portfolio experiment, 2026-03-23 through 2026-06-30.
+Eight securities (APTV, CTRA, DD, FDX, HOLX, HON, HST, WRB) omitted from inception. Remaining snapshot weights renormalized. Uses existing user-excluded event decisions; reverse-split names additionally omitted because actual fractional-share accounting is unavailable. Raw source prices unchanged. This is not full S&P 500 index fund performance.

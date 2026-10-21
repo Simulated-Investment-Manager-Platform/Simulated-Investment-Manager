@@ -4,3 +4,4 @@ numpy>=1.24,<3
 wrds>=3.2
 jupyter>=1.0
 ipykernel>=6.0
+matplotlib>=3.7

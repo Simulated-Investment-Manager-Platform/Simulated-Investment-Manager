@@ -1,0 +1,15 @@
+,value
+sessions,69
+first_session,2026-03-23 00:00:00
+last_session,2026-06-30 00:00:00
+snapshot_decisions,2
+ending_nav,11448966784.474758
+ending_cash,22012696.714757904
+ending_receivables,4927844.04
+minimum_cash,16655551.23043791
+fees,0.0
+unitized_total_return,0.1448966784474761
+restricted_portfolio,True
+explicit_event_exclusions,13
+scope_exclusions,32
+real_quarter_manually_validated,False
