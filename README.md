@@ -64,7 +64,7 @@ python -m pip install -r requirements.txt
 jupyter notebook BMLL_Stage1_2_Corporate_Actions_WRDS_Bloomberg.ipynb
 ```
 
-The notebook has Google Colab credential support. Outside Colab, provide credentials securely to `wrds_session(...)` using your own local secret-management method. **Never paste a password into committed code.**
+The notebook automatically detects Colab versus local Jupyter and uses CPU calculations in either environment. Run the setup cells first; `%pip` installs into the active kernel. In Colab, use Secrets as described above. Locally, set `WRDS_USERNAME` and `WRDS_PASSWORD` in your environment before starting Jupyter, or leave them unset to receive a username prompt and a hidden password prompt when connecting. Explicit `wrds_session(username=..., password=...)` arguments take priority. Credentials are stored in the PostgreSQL password file (`~/.pgpass` on macOS/Linux, `%APPDATA%/postgresql/pgpass.conf` on Windows, or `PGPASSFILE` if set). **Never paste a password into committed code.**
 
 ## Corporate-actions pipeline
 
