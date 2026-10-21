@@ -1,0 +1,15 @@
+{
+  "start": "2026-03-23",
+  "end": "2026-06-30",
+  "aum": 10000000000.0,
+  "cash_buffer_bps": 10.0,
+  "fee_bps": 0.0,
+  "files": {
+    "data/stage2_inputs/manifest.json": "1763fb542fe2f77a1fc192ac80680e3362d73c397f66ee24a49fe5148c27bc08",
+    "data/stage2_inputs/coverage.json": "296030763d65968bc49a4f57cefdf4eff5ea09599051c46e6989d113db743975",
+    "data/stage2_review/event_decisions.csv": "8e9bc923bb4b0c99db0e2a9c6e10bf7f2295b631b929f7e52c521df2540b8c68",
+    "data/stage2_review/scope_decisions.csv": "fcb93d8bd61a3ed1489d360b01dc344d2d1bcd470d9e6f394fd35887e3877837",
+    "research_pipeline.py": "fb6b2e233bae046ba58dd9cbe8b67accb6e9e7a4fb32a77a5c614e4566cb29fb",
+    "BMLL_Stage1_2_Corporate_Actions_WRDS_Bloomberg.ipynb": "d7620c8b9b666bed83c94bb9fb5b4ed13e4c268511cee29b6158f30e3f5f7537"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "event_decisions": {
+    "APPROVE": 453,
+    "EXCLUDE": 13
+  },
+  "scope_decisions": {
+    "EXCLUDE": 32
+  },
+  "split_factor_checks": {
+    "AGREE": 5
+  },
+  "validated_approved_events": 453,
+  "unresolved_event_rows": 0,
+  "unresolved_scope_rows": 0,
+  "public_scope_resolutions": 6,
+  "public_terms_verified_issuers": 7,
+  "price_rows": 34912,
+  "duplicate_price_keys": 0,
+  "nonpositive_or_nontrade_prices": 2,
+  "user_requested_event_exclusions": 13
+}

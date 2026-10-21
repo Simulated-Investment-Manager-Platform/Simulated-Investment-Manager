@@ -68,6 +68,22 @@ The notebook automatically detects Colab versus local Jupyter and uses CPU calcu
 
 ## Corporate-actions pipeline
 
+### Daily-fund follow-on notebook
+
+`BMLL_Stage3_Daily_Fund_Research.ipynb` consumes the first notebook's full in-memory tables through the new **5L** export cell. Run 5L in the original kernel after the quarterly panel and corporate-action queries. Saved notebook displays are truncated and are not used as input tables.
+
+The follow-on defaults to the **2026-03-23–2026-06-30** experiment. Its `fetch_wrds` mode refreshes the historical membership universe, actions, identifier history, cumulative factors, raw daily prices and trading calendar; `cache` mode verifies and reuses exported inputs. The previous 15-security extraction is insufficient for a full index portfolio. Review `data/stage2_review/event_decisions.csv` and `scope_decisions.csv`, documenting approvals/exclusions before replay. Templates are preserved across reruns; changed source records invalidate review keys.
+
+The new `research_pipeline.py` implements a persistent ordinary-split/dividend ledger, quarterly next-session close replay, cash/NAV reconciliation, unitized investor flows, seeded cash-buffer experiments, supplied-benchmark comparisons, dated BMLL mapping validation and supplied-order TCA calculations. Generated data stays under ignored `data/` and `outputs/` folders. Exported review exclusions remain visible in validation summaries.
+
+Complex corporate-action accounting, fractional cash-in-lieu, intermediate-state restart, exact index-rebalance-close execution and a calibrated BMLL execution model remain unfinished. Benchmark and vendor data must be supplied separately. The notebook's completion checklist distinguishes implemented code from external-data requirements and real-quarter sign-off; it does not label synthetic tests as live validation.
+
+Run the offline checks with:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
 ```text
 WRDS / CRSP CIZ                              Bloomberg (authorized CSV)
   stkdistributions                             manually normalized columns

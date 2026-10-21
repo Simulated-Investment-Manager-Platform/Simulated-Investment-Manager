@@ -1,0 +1,13 @@
+{
+  "reviewed_at_utc": "2026-10-21T12:38:03.065262+00:00",
+  "backup": "data/stage2_review/backups/20261021T123803256628Z",
+  "files": {
+    "data/stage2_inputs/manifest.json": "1763fb542fe2f77a1fc192ac80680e3362d73c397f66ee24a49fe5148c27bc08",
+    "data/stage2_inputs/coverage.json": "296030763d65968bc49a4f57cefdf4eff5ea09599051c46e6989d113db743975",
+    "data/stage2_review/event_candidates.csv": "fca7a3b0f82bed9f1dd4103bb68812b89cdc32e5fb691e034da12da47f849778",
+    "data/stage2_review/event_decisions.csv": "4058eaceee33c4f7710e21dadf56b6904d8ea9791fa03bf1a73c0d53521dee63",
+    "data/stage2_review/scope_decisions.csv": "fcb93d8bd61a3ed1489d360b01dc344d2d1bcd470d9e6f394fd35887e3877837",
+    "scripts/review_stage2_csvs.py": "854f5145ddab75c0bda0285df7c5963b1f0c6a3300a411b265c1c157e3b69939",
+    "data/stage2_review/complex_action_evidence.csv": "b4c44802776ccf369571f4a30334ca1765cad0fd4cb526025d6733a861bcdc2a"
+  }
+}

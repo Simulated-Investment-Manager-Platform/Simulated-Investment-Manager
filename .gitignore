@@ -10,11 +10,6 @@ __pycache__/
 .env
 .env.*
 
-# Generated datasets
-data/
-outputs/
-*.parquet
-
 # Local credentials
 credentials.json
 secrets.json
