@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "tables": {
+    "weights": {
+      "rows": 8551,
+      "sha256": "eda8734741a188981d5cdaa707873bad21970f0321eb60bb161d9d0fe90ff1aa"
+    },
+    "wrds_corporate_actions": {
+      "rows": 201,
+      "sha256": "5c8979e5d43a4ad51a427b2876d2e13fb439c86c280e17d78767b12327da0049"
+    },
+    "wrds_delist_events": {
+      "rows": 0,
+      "sha256": "d836de83064a3fb7f70cbe8774a1a72cac4d20a85205b29e858d26980a885af8"
+    },
+    "wrds_adj_factors": {
+      "rows": 16890,
+      "sha256": "aa4dc22ac9daa8368ae146580b87d4ba3279622b8becdfb482be094c7048af57"
+    },
+    "wrds_id_history": {
+      "rows": 60,
+      "sha256": "75f565feee9d451bb399feb058113da3fa0d6a47250f8cdb78e63494b9eca148"
+    },
+    "bloomberg_corporate_actions": {
+      "rows": 8497,
+      "sha256": "95661c6d521bf236be3d970c9f3ae3765ccfea70c0bc0f046e986c57c9992fc9"
+    },
+    "unified_corporate_actions": {
+      "rows": 8499,
+      "sha256": "a0a894ab1bc4c8e65f0ebfe019ddecd4c2b69ddd86cbba4dc578cc4c0d905d77"
+    },
+    "wrds_table_report": {
+      "rows": 12,
+      "sha256": "8dbc1b93ecb6b4be5a565fa57055bd9ef00dd425361a1fd5562550b90c87c387"
+    }
+  },
+  "ca_start": "2022-01-01",
+  "ca_end": "2026-06-30",
+  "extracted_permnos": [
+    10104,
+    10107,
+    10138,
+    10145,
+    10516,
+    10696,
+    11308,
+    11403,
+    11404,
+    11533,
+    11600,
+    11618,
+    11674,
+    11752,
+    11762
+  ],
+  "selected_permnos": [
+    10104,
+    10107,
+    10138,
+    10145,
+    10516,
+    10696,
+    11308,
+    11403,
+    11404,
+    11533,
+    11600,
+    11618,
+    11674,
+    11752,
+    11762
+  ]
+}

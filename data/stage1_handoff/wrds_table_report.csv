@@ -1,0 +1,13 @@
+schema,table,available,missing_required,note
+crsp_q_stock,stkdistributions,True,,19 columns
+crsp_q_stock,stkdelists,True,,19 columns
+crsp_q_stock,stkdlycumulativeadjfactor,True,,5 columns
+crsp_q_stock,stksecurityinfohist,True,,36 columns
+crsp_a_stock,stkdistributions,True,,19 columns
+crsp_a_stock,stkdelists,True,,19 columns
+crsp_a_stock,stkdlycumulativeadjfactor,True,,5 columns
+crsp_a_stock,stksecurityinfohist,True,,36 columns
+crsp,stkdistributions,True,,19 columns
+crsp,stkdelists,True,,19 columns
+crsp,stkdlycumulativeadjfactor,True,,5 columns
+crsp,stksecurityinfohist,True,,36 columns
