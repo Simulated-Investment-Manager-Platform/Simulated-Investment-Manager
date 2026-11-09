@@ -13,7 +13,8 @@ import numpy as np
 import pandas as pd
 
 from research_pipeline import (load_helpers, load_handoff, read_table, scope_events,
-                               review_candidates, simulate, approved_events)
+                               review_candidates, approved_events)
+from fund_simulator import simulate_fund, rebalance_schedule
 from scripts.freeze_data import derive
 from scripts.coverage_recovery import suggest_provisional_events, temporal_exclusion_snapshots
 
@@ -55,7 +56,17 @@ def _read_review(path, key):
 def generate(root, start, end, *, initial_cash=1e10, cash_buffer_bps=10.0,
              fee_bps=0.0, asof=None, mode='restricted', workbook=None,
              benchmark=None, mapping=None, qc=None, resolutions=None,
-             provisional_wrds_research=True):
+             provisional_wrds_research=True, execution_timing='reference_close',
+             flows=None, flow_band_bps=25.0):
+    """Build the research candidate.
+
+    execution_timing='reference_close' trades the quarterly rebalance in the
+    closing auction of the S&P reference Friday (decided the session before);
+    'next_session' reproduces the original Monday-decision / Tuesday-fill run.
+    ``start`` is the first decision session for the chosen timing. ``flows``
+    is an optional DataFrame of dealing-date investor flows (see
+    fund_simulator.simulate_fund).
+    """
     root = Path(root).resolve()
     stage = root/'data/stage2_inputs'
     review = root/'data/stage2_review'
@@ -73,14 +84,18 @@ def generate(root, start, end, *, initial_cash=1e10, cash_buffer_bps=10.0,
         if digest(stage/name)!=d: raise ValueError(f'Cached market data changed: {name}')
     weights = upstream['weights']
     weights = weights.loc[weights.date.between(start,end)].copy()
-    if weights.empty or weights.date.min() != pd.Timestamp(start):
-        raise ValueError('Start date is not a post-rebalance decision snapshot')
     prices = read_table(stage/'daily_prices.csv')
     calendar = read_table(stage/'calendar.csv').date
-    if calendar.empty or calendar.min()!=pd.Timestamp(start) or calendar.max()>pd.Timestamp(end):
-        raise ValueError('Trading calendar coverage/date mismatch')
     if calendar.duplicated().any() or not calendar.is_monotonic_increasing:
         raise ValueError('Trading calendar is unsorted or duplicated')
+    if calendar.empty or calendar.min()!=pd.Timestamp(start) or calendar.max()>pd.Timestamp(end):
+        raise ValueError('Trading calendar coverage/date mismatch')
+    if weights.empty:
+        raise ValueError('No quarterly snapshot inside the replay window')
+    schedule = rebalance_schedule(weights, calendar, execution_timing)
+    if schedule.decision_date.iloc[0] != pd.Timestamp(start):
+        raise ValueError(f'Start must be the first {execution_timing} decision session: '
+                         f'{schedule.decision_date.iloc[0].date()}')
     universe = {int(p) for p in coverage['universe']}
     action_parts = [upstream[n] for n in ('wrds_corporate_actions', 'wrds_delist_events') if not upstream[n].empty]
     wrds_all = pd.concat(action_parts, ignore_index=True) if action_parts else upstream['wrds_corporate_actions'].copy()
@@ -210,7 +225,7 @@ def generate(root, start, end, *, initial_cash=1e10, cash_buffer_bps=10.0,
     px['date']=pd.to_datetime(px['date']).dt.normalize()
     px['permno']=pd.to_numeric(px['permno'],errors='raise').astype('int64')
     if px[['date','permno']].duplicated().any(): raise ValueError('Duplicated daily price key')
-    required = required_quote_days(weights, calendar)
+    required = required_quote_days(weights, calendar, execution_timing)
     coverage_details = price_coverage_report(required, px)
     coverage_details.to_csv(review/'required_price_coverage.csv', index=False)
     for r in coverage_details.itertuples(index=False):
@@ -239,14 +254,18 @@ def generate(root, start, end, *, initial_cash=1e10, cash_buffer_bps=10.0,
     # The old version dropped a security for EVERY quarter if ONE event in four
     # years was unresolved. This version excludes only snapshots whose holding
     # interval overlaps the event and checks required prices in that same interval.
-    keep, excluded = temporal_exclusion_snapshots(weights, calendar, timed_blocks, prices)
+    keep, excluded = temporal_exclusion_snapshots(weights, calendar, timed_blocks, prices,
+                                                  execution_timing)
     excluded.to_csv(output/'excluded_security_snapshots.csv',index=False)
     if not chosen.empty:
         chosen['requires_review'] = False  # simulator input only; not human approval
         chosen['review_reason'] = ''
-    # Ledger simulator uses next-session CRSP observed close. It does not reconstruct L2/L3 order book.
-    results=simulate(keep, prices, calendar, chosen, start, end,
-       initial_cash=initial_cash,cash_buffer_bps=cash_buffer_bps,fee_bps=fee_bps)
+    # Fills use the CRSP close of the execution session (reference-Friday closing
+    # auction under reference_close). No L2/L3 order book is reconstructed here.
+    results=simulate_fund(keep, prices, calendar, chosen, start, end,
+       initial_cash=initial_cash,cash_buffer_bps=cash_buffer_bps,fee_bps=fee_bps,
+       flows=flows, execution_timing=execution_timing, flow_band_bps=flow_band_bps)
+    results['schedule'].to_csv(output/'rebalance_schedule.csv',index=False)
     for name in ('daily_nav','daily_holdings','orders','fills','action_journal'):
         df=results[name]
         if df.empty and not len(df.columns):
@@ -273,7 +292,8 @@ def generate(root, start, end, *, initial_cash=1e10, cash_buffer_bps=10.0,
       'original_snapshot_permnos':int(weights.permno.nunique()),'kept_snapshot_permnos':int(keep.permno.nunique()),
       'simulated_actions':len(chosen),'provisional':True}
     (review/'scenario_review_summary.json').write_text(json.dumps(review_summary,indent=2))
-    prov={'start':start,'end':end,'aum':initial_cash,
+    prov={'start':start,'end':end,'aum':initial_cash,'execution_timing':execution_timing,
+      'synthetic_flows':flows is not None,'flow_band_bps':flow_band_bps,
       'provisional_wrds_research_enabled':bool(provisional_wrds_research),'cash_buffer_bps':cash_buffer_bps,
       'fee_bps':fee_bps, 'status':'RESEARCH_CANDIDATE_NOT_HUMAN_APPROVED',
       'files':{str(p.relative_to(root)):digest(p) for p in [stage/'coverage.json',stage/'manifest.json',

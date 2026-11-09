@@ -10,14 +10,20 @@ import pandas as pd
 import numpy as np
 
 
-def required_quote_days(weights, calendar):
+def required_quote_days(weights, calendar, execution_timing='next_session'):
     """PERMNO -> required valuation and decision/fill sessions.
 
-    Holdings from snapshot t must remain valuated until the execution session
-    following snapshot t+1, when they can be sold. The next snapshot itself
-    may first trade on t+1's next session. Original simulation never trades
-    before a snapshot and has no forced intraquarter delisting resolution.
+    next_session: holdings from snapshot t must remain valuated until the
+    execution session following snapshot t+1, when they can be sold. The next
+    snapshot itself may first trade on t+1's next session.
+
+    reference_close: snapshot t's names are decided on the session before its
+    reference Friday, bought in that Friday's closing auction and held until the
+    closing auction of snapshot t+1's reference Friday. Index adds therefore need
+    TR closes on the Thursday and Friday *before* the Monday snapshot.
     """
+    if execution_timing == 'reference_close':
+        return _required_reference_close(weights, calendar)
     w = weights.copy()
     w['date'] = pd.to_datetime(w.date).dt.normalize()
     if w[['date','permno']].duplicated().any():
@@ -42,6 +48,28 @@ def required_quote_days(weights, calendar):
         active_days = set(cal[left:right+1])
         for pid in w.loc[w.date.eq(d),'permno']:
             need[int(pid)].update(active_days)
+    return {p: frozenset(days) for p, days in need.items()}
+
+
+def _required_reference_close(weights, calendar):
+    from fund_simulator import rebalance_schedule
+    cal = pd.DatetimeIndex(pd.to_datetime(calendar)).normalize().sort_values().unique()
+    w = weights.copy()
+    w['date'] = pd.to_datetime(w.date).dt.normalize()
+    if w[['date','permno']].duplicated().any():
+        raise ValueError('Duplicate security in quarterly snapshot')
+    sched = rebalance_schedule(w, cal, 'reference_close').sort_values('snapshot_date')
+    if sched.decision_date.iloc[0] != cal[0]:
+        raise ValueError('Replay calendar must start at the first decision session '
+                         '(the session before the first reference Friday)')
+    need = defaultdict(set)
+    rows = list(sched.itertuples(index=False))
+    for i, r in enumerate(rows):
+        left = cal.get_loc(r.decision_date)
+        right = cal.get_loc(rows[i+1].execution_date) if i+1 < len(rows) else len(cal)-1
+        active = set(cal[left:right+1])
+        for pid in w.loc[w.date.eq(r.snapshot_date),'permno']:
+            need[int(pid)].update(active)
     return {p: frozenset(days) for p, days in need.items()}
 
 
@@ -74,7 +102,8 @@ def price_coverage_report(required, prices):
     return pd.DataFrame(out)
 
 
-def audit(root, *, evaluation_start='2022-07-01', evaluation_end='2026-06-30'):
+def audit(root, *, evaluation_start='2022-07-01', evaluation_end='2026-06-30',
+          execution_timing='reference_close'):
     from research_pipeline import load_handoff, read_table
     root=Path(root)
     folder=root/'data/stage2_inputs'
@@ -83,10 +112,11 @@ def audit(root, *, evaluation_start='2022-07-01', evaluation_end='2026-06-30'):
     px=read_table(folder/'daily_prices.csv')
     cal=read_table(folder/'calendar.csv').date
     w['date']=pd.to_datetime(w.date)
-    required=required_quote_days(w[w.date.between(cal.min(),cal.max())],cal)
+    required=required_quote_days(w[w.date.between(cal.min(),cal.max())],cal,execution_timing)
     details=price_coverage_report(required,px)
     summary={
       'evaluation_start':evaluation_start,'evaluation_end':evaluation_end,
+      'execution_timing':execution_timing,
       'replay_start':str(pd.Timestamp(cal.min()).date()),
       'replay_end':str(pd.Timestamp(cal.max()).date()),
       'trading_sessions':len(cal),

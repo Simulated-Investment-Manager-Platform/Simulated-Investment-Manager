@@ -75,11 +75,14 @@ def suggest_provisional_events(candidates, split_checks):
     return c
 
 
-def temporal_exclusion_snapshots(weights, calendar, event_blocks, prices):
+def temporal_exclusion_snapshots(weights, calendar, event_blocks, prices,
+                                 execution_timing='next_session'):
     """Exclude per snapshot/holding interval rather than excluding PERMNO for all years.
 
     event_blocks: dict PERMNO -> [(ex_date or None, reason), ...].
     Price validation includes decision day and every day until next snapshot's close fill.
+    With execution_timing='reference_close' the interval runs from the session
+    before the reference Friday to the next reference Friday's closing auction.
     This remains an *explicit restricted scenario*, not true index replication.
     """
     w=weights.copy()
@@ -93,12 +96,20 @@ def temporal_exclusion_snapshots(weights, calendar, event_blocks, prices):
     if not all(d in cal for d in snaps):raise ValueError('Snapshot without trading day')
     by_price={int(pid):f.set_index('date') for pid,f in px.groupby('permno')}
     exclusions=[]
+    if execution_timing=='reference_close':
+        from fund_simulator import rebalance_schedule
+        sched=rebalance_schedule(w,cal,'reference_close').set_index('snapshot_date')
+        decide={d:sched.loc[d,'decision_date'] for d in snaps}
+        execute={d:sched.loc[d,'execution_date'] for d in snaps}
+    else:
+        decide={d:d for d in snaps}
+        execute={d:cal[min(cal.get_loc(d)+1,len(cal)-1)] for d in snaps}
     for j,d in enumerate(snaps):
-        left=cal.get_loc(d)
-        right=min(len(cal)-1,cal.get_loc(snaps[j+1])+1) if j<len(snaps)-1 else len(cal)-1
+        left=cal.get_loc(decide[d])
+        right=cal.get_loc(execute[snaps[j+1]]) if j<len(snaps)-1 else len(cal)-1
         required=cal[left:right+1]
         # An event after order execution is relevant while the position is held.
-        effective_start=cal[min(left+1,len(cal)-1)]
+        effective_start=execute[d]
         for row in w.loc[w.date.eq(d)].itertuples(index=False):
             pid=int(row.permno)
             problems=[]
@@ -118,9 +129,9 @@ def temporal_exclusion_snapshots(weights, calendar, event_blocks, prices):
                 # Important: non-TR flag does NOT invalidate a valuation close.
                 # It blocks potentially required execution closes only.
                 if 'price_flag' in part:
-                    test_dates=[d,effective_start]
+                    test_dates=[decide[d],effective_start]
                     if j<len(snaps)-1:
-                        test_dates.extend([snaps[j+1],required[-1]])
+                        test_dates.extend([decide[snaps[j+1]],required[-1]])
                     if part.loc[list(dict.fromkeys(test_dates)),'price_flag'].astype(str).str.upper().ne('TR').any():
                         problems.append('nontradeable_snapshot_or_execution_close')
             if problems:
