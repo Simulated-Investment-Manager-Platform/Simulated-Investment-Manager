@@ -15,13 +15,16 @@ A related corporate-actions workstream combines **WRDS/CRSP CIZ** records with s
 | Quarterly snapshots | Prototype implemented | Post-reference-date snapshots; timestamp alignment matters |
 | $10B portfolio targets | Prototype implemented | Whole-share target quantities and configurable cash buffer |
 | Initial/rebalance orders | Prototype implemented | Target-minus-current holdings |
-| Close-price execution baseline | Prototype implemented | Next-session CRSP close, **not** an actual fill or calibrated execution model |
+| Rebalance execution timing | Implemented (`fund_simulator.py`) | Decided at the session before the S&P reference Friday, filled at that Friday's close (closing-auction proxy). `next_session` reproduces the old Monday/Tuesday run |
+| Investor flows | Implemented (synthetic scenario) | One-session notice, dealing-day closing-auction flow trades, cash band |
+| S&P 500 total-return benchmark | Implemented (`scripts/benchmark.py`) | CRSP `dsp500` `vwretd`; tracking difference/error over the evaluation window |
 | WRDS corporate-action discovery/extraction | Code implemented, live validation pending | Distributions, delistings, cumulative factors, historical security IDs |
 | Bloomberg CSV normalization | Code implemented, real export validation pending | Historical identifier mapping; no Bloomberg API connection |
 | WRDS–Bloomberg event reconciliation | Synthetic tests available | Agreement/conflict/review queue |
 | Split/dividend accounting | Synthetic prototype | Handles approved ordinary splits and cash-dividend accrual/payment |
 | Daily multi-quarter fund ledger | **Not yet integrated** | Corporate actions must be applied across successive valuation dates |
-| Auction/VWAP/TWAP execution and TCA | **Not yet implemented** | Requires BMLL coverage and order/fill integration |
+| PM → Trader → Broker order schema | Implemented (`tca/schema.py`, `docs/order_schema.md`) | Validated foreign keys and quantity conservation |
+| Auction / VWAP / arrival+impact execution and TCA | Implemented, **uncalibrated** (`tca/`, `BMLL_TCA_Execution_Comparison.ipynb`) | BMLL daily per-MIC VWAP/volume + auction prints, or a synthetic stand-in anchored on CRSP closes; square-root impact coefficients still need BMLL calibration |
 
 **Validation caveat:** Synthetic tests exercise the logic, but do not establish correctness on licensed live WRDS/Bloomberg data. The notebook's historical WRDS demonstrations require your own account and entitlements.
 
@@ -77,6 +80,13 @@ The follow-on defaults to the **2026-03-23–2026-06-30** experiment. Its `fetch
 The new `research_pipeline.py` implements a persistent ordinary-split/dividend ledger, quarterly next-session close replay, cash/NAV reconciliation, unitized investor flows, seeded cash-buffer experiments, supplied-benchmark comparisons, dated BMLL mapping validation and supplied-order TCA calculations. Generated data stays under ignored `data/` and `outputs/` folders. Exported review exclusions remain visible in validation summaries.
 
 Complex corporate-action accounting, fractional cash-in-lieu, intermediate-state restart, exact index-rebalance-close execution and a calibrated BMLL execution model remain unfinished. Benchmark and vendor data must be supplied separately. The notebook's completion checklist distinguishes implemented code from external-data requirements and real-quarter sign-off; it does not label synthetic tests as live validation.
+
+### Supervisor-handoff changes (Nov 2026)
+
+- `fund_simulator.simulate_fund` replaces `research_pipeline.simulate` in `scripts/complete_release.py`. The original function is untouched, and a regression test proves `execution_timing='next_session'` reproduces it exactly. The new default, `reference_close`, trades the quarterly rebalance in the reference Friday's closing auction.
+- **Re-extraction is needed.** The replay must start on the session before the first reference Friday (2022-06-16), and index adds need CRSP closes on the Thursday and Friday before their Monday snapshot. The preflight reports any gaps. `scripts/build_wrds_handoff.py` is not in this snapshot; if it only pulls prices from each snapshot date, widen its per-security window by a week.
+- `scripts/freeze_data.py`'s `derive` validates the new outputs. Orders and fills gain `order_id`, `reason` and flow rows, and `daily_nav.external_flow` is now non-zero. Check that its reconciliation accepts these.
+- Phase 2: `tca/` plus `BMLL_TCA_Execution_Comparison.ipynb` (order schema, BMLL per-MIC order generator, closing auction vs VWAP vs arrival+impact on one date, then all rebalances with notional-weighted costs and execution tracking error).
 
 Run the offline checks with:
 

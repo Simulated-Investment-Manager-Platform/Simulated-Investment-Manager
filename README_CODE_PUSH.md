@@ -7,6 +7,7 @@ This directory intentionally includes only the newly introduced 2022–2026 cove
 - `research_pipeline.py` from Tanish's daily fund implementation.
 - `BMLL_Stage1_2_Corporate_Actions_WRDS_Bloomberg.ipynb` from the existing WRDS/Bloomberg notebook.
 - `scripts/build_wrds_handoff.py`, `scripts/extract_bloomberg.py`, `scripts/freeze_data.py`, `scripts/review_triage.py`, `scripts/review_stage2_csvs.py` from the existing data prep kit.
+  **Not included in this snapshot:** `build_wrds_handoff.py`, `extract_bloomberg.py`, `freeze_data.py`, `review_triage.py`. `complete_release.py` cannot be imported without `freeze_data.py`.
 - `requirements.txt`, including `pandas`, `numpy`, `wrds`, `openpyxl`, `psycopg2-binary` and `nbformat`.
 
 **Do not replace Tanish's `research_pipeline.py`, Chuan's notebooks, or the existing repository README blindly.** Compare against the latest `main` and integrate changes in a pull request.
