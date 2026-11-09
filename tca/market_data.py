@@ -272,3 +272,50 @@ class BMLLSource:
         stock = stock[STOCK_COLS]
         check_market(venue, stock)
         return venue.reset_index(drop=True), stock.reset_index(drop=True)
+
+
+def anchors_from_blotter(blotter, weights=None):
+    """Real price anchors for ``synthetic_market`` from a blotter.
+
+    prev_close = decision price (split-adjusted execution basis when present),
+    close_price = execution price (fills joined in the handoff file). Market cap
+    (CRSP, $000 in weights.csv) from the latest snapshot on/before the trade date
+    gives a liquidity scale for ADV.
+    """
+    b = blotter.copy()
+    tcol = next(c for c in ("execution_date", "expected_execution_date") if c in b)
+    pcol = "decision_price_execution_basis" if "decision_price_execution_basis" in b else "decision_price"
+    a = pd.DataFrame({"date": pd.to_datetime(b[tcol]).dt.normalize(), "permno": b.permno.astype(int),
+                      "prev_close": b[pcol].astype(float), "close_price": b.execution_price.astype(float)})
+    a = a.drop_duplicates(["date", "permno"])
+    if weights is not None:
+        w = weights[["date", "permno", "market_cap"]].copy()
+        w["date"] = pd.to_datetime(w.date).dt.normalize()
+        w = w.sort_values("date")
+        a = pd.merge_asof(a.sort_values("date"), w.rename(columns={"date": "snap"}), left_on="date",
+                          right_on="snap", by="permno", direction="backward")
+        a["market_cap_usd"] = a.market_cap * 1e3
+        med = a.market_cap_usd.median()
+        a["market_cap_usd"] = a.market_cap_usd.fillna(med)
+        a = a.drop(columns=["snap", "market_cap"])
+    return a.reset_index(drop=True)
+
+
+def ticker_map_from_weights(weights):
+    """Point-in-time PERMNO -> CRSP ticker from quarterly snapshots.
+
+    Each snapshot's ticker is valid from a week before its reference date (before
+    the Friday-auction orders are placed) until the day before the next
+    snapshot's window opens, so windows never overlap. BMLL tickers may use a different share-class
+    separator (BRK.B vs BRK B); check unmapped names before a BMLL pull.
+    """
+    w = weights[["date", "permno", "ticker"]].copy()
+    w["date"] = pd.to_datetime(w.date).dt.normalize()
+    start_col = pd.to_datetime(weights["reference_date"]).dt.normalize() if "reference_date" in weights else w.date
+    w["valid_from"] = start_col - pd.Timedelta(days=7)
+    window = w.groupby("date").valid_from.min()          # snapshot -> window start
+    nxt = dict(zip(window.index[:-1], window.values[1:]))
+    # Windows tile: each ends the day before the next snapshot's window opens.
+    w["valid_to"] = pd.to_datetime(w.date.map(nxt)) - pd.Timedelta(days=1)
+    w = w.sort_values(["permno", "valid_from"])
+    return w[["permno", "ticker", "valid_from", "valid_to"]].reset_index(drop=True)

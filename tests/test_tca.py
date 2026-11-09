@@ -204,3 +204,20 @@ class BMLLAdapterTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LoaderTests(unittest.TestCase):
+    def test_ticker_windows_tile_and_join_fills(self):
+        from tca.market_data import ticker_map_from_weights
+        from tca.schema import join_orders_fills
+        w = pd.DataFrame({"date": ["2025-03-24", "2025-03-24", "2025-06-23"], "permno": [1, 2, 1],
+                          "ticker": ["AAA", "BBB", "AAB"], "reference_date": ["2025-03-21", "2025-03-21", "2025-06-20"]})
+        m = ticker_map_from_weights(w)
+        a = m[m.permno.eq(1)].reset_index(drop=True)
+        self.assertEqual(a.valid_to[0] + pd.Timedelta(days=1), a.valid_from[1])
+        self.assertTrue(pd.isna(a.valid_to[1]))
+        o = pd.DataFrame({"order_id": ["x", "y"], "decision_date": ["2025-03-20"] * 2, "permno": [1, 2]})
+        f = pd.DataFrame({"order_id": ["x", "y"], "execution_date": ["2025-03-21"] * 2, "execution_price": [10., 20.]})
+        self.assertEqual(join_orders_fills(o, f).execution_price.tolist(), [10., 20.])
+        with self.assertRaisesRegex(ValueError, "without a fill"):
+            join_orders_fills(o, f.iloc[:1])

@@ -74,7 +74,8 @@ def simulate_fills(trader, broker, venue_days, stock_days, model=None):
     # Parent-level quantities in each mechanism (per trader order).
     q_parent = b.trader_order_id.map(t.quantity).to_numpy(float)
     is_moc = b.order_type.eq("MOC").to_numpy()
-    window = np.array([_window_share(a, e) for a, e in zip(b.start_ts, b.end_ts)])
+    ws = {k: _window_share(a, e) for k, a, e in zip(t.index, t.start_ts, t.end_ts)}
+    window = b.trader_order_id.map(ws).to_numpy(float)
     i_auc = model.auction_eta * sigma * np.sqrt(q_parent / np.maximum(auction_vol, 1))
     i_cont = model.eta * sigma * np.sqrt(q_parent / (cont_vol * window))
     dark = b.mic.isin(DARK_MICS).to_numpy()

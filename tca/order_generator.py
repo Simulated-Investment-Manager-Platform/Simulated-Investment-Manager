@@ -115,8 +115,8 @@ def _buckets(start, end, n_bins=13, kind="VWAP", decay=3.0):
 
 def broker_orders(trader, venue_days, stock_days, *, n_bins=13, collar_sigmas=3.0, is_decay=3.0):
     """Child orders for every trader order."""
-    v = venue_days.copy()
-    v = v[v.volume > 0]
+    days = pd.to_datetime(trader.trade_date).dt.normalize().unique()
+    v = venue_days[venue_days.date.isin(days) & venue_days.volume.gt(0)]
     venues = {k: g for k, g in v.groupby(["date", "permno"])}
     s = stock_days.set_index(["date", "permno"])
     rows = []

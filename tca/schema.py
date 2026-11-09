@@ -199,3 +199,24 @@ def pm_orders_from_blotter(blotter, *, portfolio_id="BMLL_SP500_10B", trade_date
     out = out[out.quantity > 0].reset_index(drop=True)
     validate(out, "pm_orders")
     return out
+
+
+def join_orders_fills(orders, fills):
+    """Attach execution date/price to a simulator blotter.
+
+    Joins on order_id when both tables carry it (fund_simulator output), else on
+    decision_date + permno (original release files). Fails on ambiguity.
+    """
+    o, f = orders.copy(), fills.copy()
+    for df in (o, f):
+        for c in ("decision_date", "execution_date", "expected_execution_date"):
+            if c in df:
+                df[c] = pd.to_datetime(df[c]).dt.normalize()
+    key = ["order_id"] if "order_id" in o and "order_id" in f else ["decision_date", "permno"]
+    if f.duplicated(key).any():
+        raise ValueError(f"fills not unique on {key}")
+    keep = key + [c for c in ("execution_date", "execution_price") if c in f]
+    out = o.merge(f[keep], on=key, how="left", validate="one_to_one")
+    if out.execution_price.isna().any():
+        raise ValueError(f"{int(out.execution_price.isna().sum())} orders without a fill")
+    return out
