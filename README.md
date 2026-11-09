@@ -26,6 +26,8 @@ A related corporate-actions workstream combines **WRDS/CRSP CIZ** records with s
 | PM → Trader → Broker order schema | Implemented (`tca/schema.py`, `docs/order_schema.md`) | Validated foreign keys and quantity conservation |
 | Auction / VWAP / arrival+impact execution and TCA | Implemented, **uncalibrated** (`tca/`, `BMLL_TCA_Execution_Comparison.ipynb`) | BMLL daily per-MIC VWAP/volume + auction prints, or a synthetic stand-in anchored on CRSP closes; square-root impact coefficients still need BMLL calibration |
 
+**Supervisor handoff (Nov 2026):** run instructions for the Friday-auction re-run, benchmark, flows and phase-2 TCA are in [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
+
 **Validation caveat:** Synthetic tests exercise the logic, but do not establish correctness on licensed live WRDS/Bloomberg data. The notebook's historical WRDS demonstrations require your own account and entitlements.
 
 ## Repository contents
