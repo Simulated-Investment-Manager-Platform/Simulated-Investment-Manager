@@ -6,12 +6,12 @@ This is a read-only review of every repo visible in the `Simulated-Investment-Ma
 
 ## 1. Summary
 
-1. **The org has three visible repos, all public.** `Simulated-Investment-Manager` (team research repo), `SIMP` (Edward's pipeline) and `App-SIMP` (a full web application). No `sim-im` repo, `exec_model` folder or fill-probability code is visible. If one exists it is private and was not reviewed.
+1. **The org has three visible repos, all public.** `Simulated-Investment-Manager` (team research repo), `SIMP` (Edward's pipeline) and `App-SIMP` (a full web application). A fourth repo, `sim-im`, is private and was reviewed later; it has fill-probability work and a Phase 1 order generator (section 9).
 2. **Licensed-looking data is committed to a public repo.** `Simulated-Investment-Manager` tracks about 19 MB under `data/` and `outputs/` (CRSP-derived weights, prices and identifiers, Bloomberg corporate actions, holdings, fills), although `.gitignore` and the README say this data is never committed. `App-SIMP` tracks `backend/isins.csv` (CRSP-derived). This needs a team decision.
 3. **The execution/TCA code exists three times and the copies disagree.** The team `tca/` package, SIMP's `src/tca_*.py` and App-SIMP's `execution/` + `analytics/tca.py` use different column names, slicing, impact formulas and decision timing. Numbers from the three are not comparable today.
 4. **SIMP is a port of the team repo as of 9 November, simplified.** It adds a Phase 1 random order generator, liquidity buckets and a dividend-timing sensitivity. It drops the BMLL client, the Bloomberg cross-check, the old timing option and all tests. It contains nothing from the toxicity track or App-SIMP.
 5. **No TCA result on real BMLL data is in any repo.** The team TCA notebook has no saved outputs and defaults to synthetic data. SIMP has no BMLL code in the tree. App-SIMP has a BMLL puller but no committed run output.
-6. **Sponsor items: the fund fixes (c) are done in code; the order model (a), Phase 1 generator (b), housekeeping (d) and the one-date and all-date TCA (e, f) are partly done; fill-probability and pre-trade models (g) and the BMLL quota issue (h) are not started.**
+6. **Sponsor items: the fund fixes (c) are done in code; the order model (a), Phase 1 generator (b), housekeeping (d) and the one-date and all-date TCA (e, f) are partly done; fill-probability and pre-trade models (g) and the BMLL quota issue (h) are not started in the three public repos. Section 9 updates b, g and h for `sim-im`.**
 7. **Recommended next step for my track:** one rebalance date on real BMLL data from the team `tca/` package, with a shared ISIN-based PERMNO to listing map and a batched, cached BMLL pull.
 
 ### What I could not check
@@ -282,7 +282,7 @@ Data pull (synthetic or live) into a hashed lake snapshot, then `Engine.run` (`r
 
 ## 7. Sponsor checklist
 
-Status describes code in the repos, not results. "Team" is `Simulated-Investment-Manager`.
+Status describes code in the three public repos, not results. "Team" is `Simulated-Investment-Manager`. Section 9 notes what the private `sim-im` repo changes.
 
 | Item | Status | Evidence | Gap |
 |---|---|---|---|
@@ -353,7 +353,7 @@ To avoid duplicating Edward's work:
 
 For the team:
 
-1. Is there a private `sim-im` repo (with `exec_model` and a daily order generator)? Who can grant access?
+1. (Answered: `sim-im` exists; see section 9.)
 2. Which repo is the source of truth for the order schema and the TCA code, and who signs off changes to it?
 3. Should `data/`, `outputs/` and `backend/isins.csv` be public? If not, who removes them from history and makes the repos private?
 4. Where are the four missing scripts, and who has the Friday-timed four-year `orders.csv`, `fills.csv` and `daily_nav.csv`?
@@ -370,3 +370,16 @@ For the sponsor (Andrew):
 4. Should impact be calibrated on BMLL data before any cost figure is presented, or are literature defaults acceptable for a first pass?
 5. For the benchmark, is CRSP `vwretd` acceptable in place of the official S&P 500 total return index?
 6. What may be committed to the repos: derived summary tables only, or nothing from BMLL at all?
+
+## 9. sim-im (private repo)
+
+Added 20 November 2026, after sections 1 to 8.
+
+The org has a fourth repo, `sim-im`, which is private. I reviewed it after being given access. Because it is private, this section is a short summary only.
+
+- It contains fill-probability work and a Phase 1 random order generator, both built on BMLL data.
+- **Sponsor item b (Phase 1 generator):** covered there.
+- **Sponsor item g (fill-probability and pre-trade models):** started there. The fill-probability part exists; pre-trade cost and adaptive execution are not started.
+- **Sponsor item h (BMLL quota):** it has a request cache and retry handling for its BMLL pulls.
+
+Sections 1 to 8 describe the three public repos and are otherwise unchanged. Before starting new work on items b, g or h in the team repo, check what `sim-im` already has.
